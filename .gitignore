@@ -1,0 +1,24 @@
+# Local credentials and configuration
+.env
+.env.*
+*.clixml
+*.credential*
+*.secrets.*
+Start-JRiver.Local.ps1
+
+# Local tools and editor state
+.codex/
+.agents/
+.vs/
+.vscode/
+
+# Generated files
+bin/
+obj/
+dist/
+*.dll
+*.pdb
+*.zip
+*.log
+.mcws-doc.html
+TestResults/

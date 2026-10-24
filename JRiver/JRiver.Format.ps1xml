@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Configuration>
+  <ViewDefinitions>
+    <View>
+      <Name>JRiver.Views</Name>
+      <ViewSelectedBy><TypeName>JRiver.View</TypeName></ViewSelectedBy>
+      <TableControl>
+        <TableHeaders><TableColumnHeader><Label>Id</Label><Width>12</Width></TableColumnHeader><TableColumnHeader><Label>PathName</Label></TableColumnHeader></TableHeaders>
+        <TableRowEntries><TableRowEntry><TableColumnItems><TableColumnItem><PropertyName>Id</PropertyName></TableColumnItem><TableColumnItem><PropertyName>PathName</PropertyName></TableColumnItem></TableColumnItems></TableRowEntry></TableRowEntries>
+      </TableControl>
+    </View>
+    <View>
+      <Name>JRiver.Tracks</Name>
+      <ViewSelectedBy><TypeName>JRiver.Track</TypeName></ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Track</Label><Width>6</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Name</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Artist</Label><Width>20</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Album</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Seconds</Label><Width>10</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Key</Label><Width>12</Width></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries><TableRowEntry><TableColumnItems>
+          <TableColumnItem><PropertyName>Track #</PropertyName></TableColumnItem>
+          <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
+          <TableColumnItem><PropertyName>Artist</PropertyName></TableColumnItem>
+          <TableColumnItem><PropertyName>Album</PropertyName></TableColumnItem>
+          <TableColumnItem><PropertyName>Duration</PropertyName><FormatString>F2</FormatString></TableColumnItem>
+          <TableColumnItem><PropertyName>Key</PropertyName></TableColumnItem>
+        </TableColumnItems></TableRowEntry></TableRowEntries>
+      </TableControl>
+    </View>
+  </ViewDefinitions>
+</Configuration>
