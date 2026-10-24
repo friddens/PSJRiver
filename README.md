@@ -1,25 +1,27 @@
 # PSJRiver – version 0.1.0
 
-En läsande PowerShell-provider för JRiver Media Center. Första versionen låter dig navigera i JRivers vyer med `cd` och `dir`, gå in i album och läsa låtarnas metadata. Den ändrar inga taggar och startar ingen uppspelning.
+A read-only PowerShell provider for JRiver Media Center. Browse JRiver views with `cd` and `dir`, navigate into albums, and inspect track metadata. This initial version does not modify tags or start playback.
 
-## Kom igång
+## Getting started
 
-Kör i Windows PowerShell 5.1 eller PowerShell 7:
+Run in Windows PowerShell 5.1 or PowerShell 7:
 
 ```powershell
-# Kör från projektmappen efter att du har packat upp eller klonat den.
+# Run from the project folder after extracting or cloning it.
 .\Start-JRiver.ps1
-# Ange MCWS-lösenordet i dialogen.
+# Enter your MCWS username and password when prompted.
 
 cd Music:\
 dir
+
+# Example navigation: view and album names depend on your JRiver library.
 cd 'Rock Albums\A\AC%2FDC'
 dir
 cd '1980-07-25 - Back In Black'
 dir
 ```
 
-Alternativt skapar du enheten själv:
+Alternatively, import the module and create a drive yourself:
 
 ```powershell
 Import-Module .\JRiver\JRiver.psd1
@@ -27,9 +29,9 @@ $credential = Get-Credential
 New-PSDrive -Name Music -PSProvider JRiver -Root '\' -Credential $credential
 ```
 
-Anslutningen går som standard till `http://localhost:52199/MCWS/v1/`, och enheten börjar i Audio (`RootId=1`). Lösenordet sparas inte i projektet. JRiver måste vara igång med MCWS aktiverat.
+The default server address is `http://localhost:52199/MCWS/v1/`, and the drive starts at Audio (`RootId=1`). Credentials are not saved in the project. JRiver must be running with MCWS enabled.
 
-## Läsa metadata
+## Reading metadata
 
 ```powershell
 $songs = @(dir)
@@ -38,64 +40,78 @@ $songs[0] | Format-List *
 $songs[0].'Album Rating'
 $songs[0].'Date Purchased'
 
-# Varje låt går även att adressera som ett enskilt objekt.
+# Each track can also be addressed as an individual item.
 Get-Item -LiteralPath $songs[0].PSPath | Format-List *
 dir '*Hells*'
 dir -Name
 cd ..
+
+# Choose columns for a particular listing.
+$songs | Format-Table 'Track #', Name, Artist, Album, Genre -AutoSize
 ```
 
-Standardlistan är kompakt, men objekten behåller alla metadatafält som MCWS returnerar, inklusive egna fält. Numeriska värden och datum lämnas i JRivers ursprungliga JSON-format. `Filename` är musikfilens verkliga sökväg; provider-sökvägen är en separat virtuell adress.
+The default track table shows track number, name, artist, album, duration in seconds, and file key. Objects retain every metadata field returned by MCWS, including custom fields. Numeric values and dates remain in JRiver's original JSON format. `Filename` is the actual music file path; the provider path is a separate virtual address.
 
-## Namn och sökvägar
-
-`Name` är originalnamnet. `PathName` och `PSChildName` är namnet att använda i sökvägen. Snedstreck och PowerShell-specialtecken procentkodas: `AC/DC` blir `AC%2FDC`, `[` blir `%5B`, `]` blir `%5D`, och `%` blir `%25`. Tab-komplettering och `dir -Name` använder dessa sökbara namn.
-
-Låtar får namn som `01. Hells Bells~21001778`; slutdelen är JRivers filnyckel och gör även lika låttitlar entydiga. Vyer med samma namn under samma förälder får ett motsvarande ID-suffix. Använd gärna `-LiteralPath` när du använder objektens `PSPath`.
-
-## Andra inställningar
+To change the default columns, edit `JRiver/JRiver.Format.ps1xml` and reload the format in your current session:
 
 ```powershell
-# Hela trädet, inklusive Audio, TV och Playlists:
+# Run from the project folder.
+Update-FormatData -PrependPath .\JRiver\JRiver.Format.ps1xml
+```
+
+## Names and paths
+
+`Name` contains the original name. Use `PathName` or `PSChildName` in a provider path. Slashes and PowerShell special characters are percent-encoded: `AC/DC` becomes `AC%2FDC`, `[` becomes `%5B`, `]` becomes `%5D`, and `%` becomes `%25`. Tab completion and `dir -Name` use these navigable names.
+
+Track paths look like `01. Hells Bells~21001778`. The suffix is JRiver's file key, which makes tracks with identical titles distinguishable. Views with the same name under the same parent receive a similar ID suffix. Use `-LiteralPath` when addressing an item's `PSPath`.
+
+## Configuration
+
+```powershell
+# Mount the full tree, including Audio, TV, and Playlists.
 New-PSDrive AllMedia JRiver '\' -Credential $credential -RootId -1
 
-# Annan MCWS-adress och utan lokal cache:
+# Use another MCWS server and disable the local cache.
 New-PSDrive Other JRiver '\' -Credential $credential `
     -ServerUri 'https://media.example.com/MCWS/v1/' -CacheSeconds 0
 
-# Hämta om innehållet i aktuell vy:
+# Refresh the current view, bypassing the local cache.
 dir -Force
 
-# Avsluta enheten efter att ha lämnat den:
+# Leave the drive before removing it.
 cd $HOME
 Remove-PSDrive Music
 ```
 
-Providern använder `Browse/Children` och, när en vy saknar undervyer, `Browse/Files?Action=JSON`. Innehåll mellanlagras i 30 sekunder per enhet. `-Force` kringgår denna lokala cache. Rekursiv listning stöds, men börja med en begränsad gren eller `-Depth 1` eftersom ett helt musikbibliotek kan innebära många anrop.
+The provider uses `Browse/Children` and, when a view has no child views, `Browse/Files?Action=JSON`. Results are cached locally for 30 seconds per drive. `-Force` bypasses this local cache. Recursive listing is supported, but start with a small branch or `-Depth 1`: browsing an entire music library can require many requests.
 
-JRivers browse-ID:n kan ändras när dess vyträd byggs om. Skapa om enheten om du får fel eller oväntade resultat efter en sådan ändring. En ny PowerShell-session behövs när C#-koden ändras, eftersom inlästa .NET-typer inte kan ersättas i samma session.
+JRiver browse IDs can change when its browse tree is rebuilt. Recreate the drive if you receive errors or unexpected results after such a change. After editing the C# source, start a new PowerShell session: loaded .NET types cannot be replaced in the same session.
 
-## Verifiering
+## Validation
 
-Livekontrollerna använder ett exempel med Back In Black och kan köras i båda PowerShell-versionerna. Sökvägen förutsätter motsvarande vyer i ditt eget bibliotek:
+The optional live checks use a Back In Black example and can run in either supported PowerShell version. The default album path requires matching views in your own library:
 
 ```powershell
 .\tests\Test-JRiver.Live.ps1 -Credential (Get-Credential)
 ```
 
-Albumets sökväg och förväntade antal spår kan ändras med `-AlbumPath` och `-ExpectedTrackCount`. Testerna läser biblioteket och verifierar även att skrivning avvisas. Inga musikfiler eller taggar ändras.
+Use `-AlbumPath` and `-ExpectedTrackCount` to specify a different album path and track count. The checks read the library and verify that deletion is rejected. They do not modify music files or tags.
 
-## Underlag
+## References
 
-MCWS-parametrarna kontrollerades mot den lokala [JRiver-dokumentationen](http://localhost:52199/MCWS/v1/doc). Modulens inläsning följer Microsofts beskrivning av [dynamiska binärmoduler](https://devblogs.microsoft.com/powershell/dynamic-binary-modules/).
+MCWS parameters were checked against the local [JRiver documentation](http://localhost:52199/MCWS/v1/doc). Module loading follows Microsoft's description of [dynamic binary modules](https://devblogs.microsoft.com/powershell/dynamic-binary-modules/).
 
-## Versionshantering
+## Version control
 
-Källkoden finns på [GitHub](https://github.com/friddens/PSJRiver). Hämta projektet med:
+The source is hosted on [GitHub](https://github.com/friddens/PSJRiver). Clone the project with:
 
 ```powershell
 git clone https://github.com/friddens/PSJRiver.git
 cd PSJRiver
 ```
 
-Modulversionen anges i `JRiver/JRiver.psd1`. Ändringar dokumenteras i [CHANGELOG.md](CHANGELOG.md), och utgivna versioner märks med Git-taggar som `v0.1.0`. Första versionen är en tidig, läsande version. PSJRiver är ett fristående projekt och är inte en officiell JRiver-produkt.
+The module version is defined in `JRiver/JRiver.psd1`. Changes are recorded in [CHANGELOG.md](CHANGELOG.md), and released versions are marked with Git tags such as `v0.1.0`. This is an early, read-only version. PSJRiver is an independent project and is not an official JRiver product.
+
+## Project language
+
+Keep documentation, source comments, help text, examples, and project-authored messages in English for an international audience. Names and metadata returned by a user's JRiver library retain their original language.

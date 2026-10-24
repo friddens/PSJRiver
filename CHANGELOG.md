@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Translate the README and example comments into English for an international audience.
+- Document how to customize the default display columns.
+- Establish English as the language for project documentation, comments, and help text.
+
 ## 0.1.0 – 2026-10-24
 
 - Initial read-only JRiver MCWS PowerShell provider.
