@@ -1,7 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 – 2026-10-25
 
+- Match wildcard paths against track and view names as well as their navigable path segments. Patterns such as `Hells*` and `*Bells` now find `Hells Bells` despite the track-number prefix and file-key suffix.
+- Add live regression checks for name patterns, album filtering, provider-qualified paths, and wildcards at multiple path levels.
 - Translate the README and example comments into English for an international audience.
 - Document how to customize the default display columns.
 - Establish English as the language for project documentation, comments, and help text.

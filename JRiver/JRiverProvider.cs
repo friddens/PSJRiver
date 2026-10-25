@@ -42,7 +42,7 @@ namespace PSJRiver
         { Server = new Uri(p.ServerUri.AbsoluteUri.TrimEnd('/') + "/"); RootId = p.RootId; CacheSeconds = p.CacheSeconds; }
     }
 
-    [CmdletProvider("JRiver", ProviderCapabilities.Credentials)]
+    [CmdletProvider("JRiver", ProviderCapabilities.Credentials | ProviderCapabilities.ExpandWildcards)]
     public sealed class JRiverProvider : NavigationCmdletProvider
     {
         private JRiverDrive qualifiedDrive;
@@ -223,6 +223,42 @@ namespace PSJRiver
                 current = next;
             }
             return current;
+        }
+
+        protected override string[] ExpandPath(string path)
+        {
+            try
+            {
+                int colon = path.IndexOf(':');
+                string root = colon < 0 ? "\\" : path.Substring(0, colon + 1) + "\\";
+                string relative = Normalize(colon < 0 ? path : path.Substring(colon + 1));
+                Resolve(root);
+                List<string> paths = new List<string> { root };
+                if (relative.Length == 0) return paths.ToArray();
+                foreach (string part in relative.Split('\\'))
+                {
+                    List<string> matches = new List<string>();
+                    bool wildcard = WildcardPattern.ContainsWildcardCharacters(part);
+                    WildcardPattern pattern = new WildcardPattern(part, WildcardOptions.IgnoreCase | WildcardOptions.CultureInvariant);
+                    foreach (string parentPath in paths)
+                    {
+                        Entry parent = Resolve(parentPath);
+                        foreach (Entry item in Children(parent))
+                        {
+                            string name = Convert.ToString(item.Value.Properties["Name"].Value, CultureInfo.InvariantCulture);
+                            // Match display names as well as navigable segments used by tab completion.
+                            bool matched = wildcard ? pattern.IsMatch(name) || pattern.IsMatch(item.Segment) :
+                                String.Equals(item.Segment, WildcardPattern.Unescape(part), StringComparison.OrdinalIgnoreCase);
+                            if (matched) matches.Add(MakePath(parentPath, item.Segment));
+                        }
+                    }
+                    paths = matches;
+                    if (paths.Count == 0 || Stopping) break;
+                }
+                return paths.ToArray();
+            }
+            catch (PipelineStoppedException) { throw; }
+            catch (Exception ex) { Report(ex, path); return new string[0]; }
         }
 
         protected override bool IsValidPath(string path) { return path != null; }

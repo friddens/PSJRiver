@@ -1,4 +1,4 @@
-# PSJRiver – version 0.1.0
+# PSJRiver – version 0.1.1
 
 A read-only PowerShell provider for JRiver Media Center. Browse JRiver views with `cd` and `dir`, navigate into albums, and inspect track metadata. This initial version does not modify tags or start playback.
 
@@ -64,6 +64,22 @@ Update-FormatData -PrependPath .\JRiver\JRiver.Format.ps1xml
 `Name` contains the original name. Use `PathName` or `PSChildName` in a provider path. Slashes and PowerShell special characters are percent-encoded: `AC/DC` becomes `AC%2FDC`, `[` becomes `%5B`, `]` becomes `%5D`, and `%` becomes `%25`. Tab completion and `dir -Name` use these navigable names.
 
 Track paths look like `01. Hells Bells~21001778`. The suffix is JRiver's file key, which makes tracks with identical titles distinguishable. Views with the same name under the same parent receive a similar ID suffix. Use `-LiteralPath` when addressing an item's `PSPath`.
+
+## Wildcard matching
+
+Wildcard paths match the original track or view name, without requiring the track-number prefix or file-key suffix:
+
+```powershell
+# Inside an album:
+dir 'Hells*'
+dir '*Bells'
+dir '*love*'
+
+# Inside an artist view, list albums whose names contain "Black":
+dir '*Black*'
+```
+
+Matching is case-insensitive and supports PowerShell patterns such as `*`, `?`, and `[A-Z]`. Navigable path segments also match, so existing path-based patterns and tab completion remain usable. Use `-LiteralPath` with a complete `PSPath` to address one specific item without wildcard expansion.
 
 ## Configuration
 

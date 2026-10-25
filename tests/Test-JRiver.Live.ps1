@@ -32,12 +32,26 @@ try {
     $names = @(Get-ChildItem -Name)
     Assert ($names.Count -eq $tracks.Count -and $names[0] -eq $tracks[0].PathName) 'Name-only listing uses navigable segments'
     Assert (@(Get-ChildItem '*Hells*').Count -eq 1) 'Wildcard listing works'
+    foreach ($pattern in @('Hells*', '*Bells', 'hells*', 'H?lls Bells', '[Hh]ells*')) {
+        $matches = @(Get-ChildItem -Path $pattern)
+        Assert ($matches.Count -eq 1 -and $matches[0].Key -eq $track.Key) "Track name pattern works: $pattern"
+    }
+    Assert (@(Get-ChildItem '*__no_matching_track__*').Count -eq 0) 'Unmatched wildcard returns no items'
+    $pathMatches = @(Get-ChildItem -Path ($tracks[0].PathName.Substring(0, 3) + '*'))
+    Assert (@($pathMatches | Where-Object Key -eq $track.Key).Count -eq 1) 'Navigable track segment patterns remain supported'
+    $qualifiedMatches = @(Get-Item -Path ($tracks[0].PSParentPath + '\Hells*'))
+    Assert ($qualifiedMatches.Count -eq 1 -and $qualifiedMatches[0].Key -eq $track.Key) 'Provider-qualified wildcard path resolves'
+    Assert (@(Get-ChildItem -Name 'Hells*')[0] -eq $track.PathName) 'Name-only wildcard listing returns the navigable segment'
     $first = Get-ChildItem | Select-Object -First 1
     Assert ($null -ne $first) 'Stopping a pipeline early works'
     $completion = TabExpansion2 'Get-Item JRiverTest:\Rock' 25
     Assert ($completion.CompletionMatches.Count -gt 0) 'Tab completion finds browse nodes'
     Set-Location ..
     Assert ((Get-Item .).Name -eq 'AC/DC') 'Parent navigation retains the original artist name'
+    $albums = @(Get-ChildItem '*Black*')
+    Assert ($albums.Count -gt 0 -and @($albums | Where-Object { -not $_.PSIsContainer -or $_.Name -notlike '*Black*' }).Count -eq 0) 'Album wildcard listing returns matching albums'
+    $nestedMatches = @(Get-Item 'JRiverTest:\Rock*\A\AC%2FDC\*Back In Black\Hells*')
+    Assert ($nestedMatches.Count -eq 1 -and $nestedMatches[0].Key -eq $track.Key) 'Wildcards work at multiple path levels'
     Assert (@(Get-ChildItem -Depth 0).Count -gt 0) 'Depth-limited listing works'
     $writeRejected = $false
     try { Remove-Item -LiteralPath $track.PSPath -ErrorAction Stop } catch { $writeRejected = $true }
