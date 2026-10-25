@@ -167,7 +167,7 @@ namespace PSJRiver
             List<Entry> entries = ReadViews(Drive, parent.Id);
             if (entries.Count == 0)
             {
-                string json = Request(Drive, "Browse/Files?Action=JSON&NoUI=1&Formatted=0&ResetCache=0&ID=" + Uri.EscapeDataString(parent.Id));
+                string json = Request(Drive, "Browse/Files?Action=JSON&Fields=Calculated&NoUI=1&Formatted=0&ResetCache=0&ID=" + Uri.EscapeDataString(parent.Id));
                 if (json.TrimStart().StartsWith("<")) ReadXml(json);
                 if (!json.TrimStart().StartsWith("[")) throw new InvalidOperationException("MCWS did not return a JSON file array.");
                 using (PowerShell shell = PowerShell.Create())

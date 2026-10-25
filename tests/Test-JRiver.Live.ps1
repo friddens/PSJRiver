@@ -25,6 +25,7 @@ try {
     Assert ($tracks.Count -eq $ExpectedTrackCount) 'Album track count matches'
     Assert (@($tracks | Where-Object PSIsContainer).Count -eq 0) 'Tracks are leaf items'
     Assert ($tracks[0].PSObject.Properties['SubGenre'] -and $tracks[0].PSObject.Properties['InMyCollection']) 'Custom metadata is preserved'
+    Assert ($null -ne $tracks[0].PSObject.Properties['Album Artist (auto)']) 'Calculated metadata is returned'
     $track = Get-Item -LiteralPath $tracks[0].PSPath
     Assert ($track.Key -eq $tracks[0].Key) 'Provider-qualified PSPath resolves to the same track'
     $relative = Get-Item -LiteralPath $tracks[0].PathName

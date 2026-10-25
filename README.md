@@ -1,4 +1,4 @@
-# PSJRiver – version 0.1.1
+# PSJRiver – version 0.1.2
 
 A read-only PowerShell provider for JRiver Media Center. Browse JRiver views with `cd` and `dir`, navigate into albums, and inspect track metadata. This initial version does not modify tags or start playback.
 
@@ -50,7 +50,7 @@ cd ..
 $songs | Format-Table 'Track #', Name, Artist, Album, Genre -AutoSize
 ```
 
-The default track table shows track number, name, artist, album, duration in seconds, and file key. Objects retain every metadata field returned by MCWS, including custom fields. Numeric values and dates remain in JRiver's original JSON format. `Filename` is the actual music file path; the provider path is a separate virtual address.
+The default track table shows track number, name, artist, album, duration in seconds, and file key. Track requests use `Fields=Calculated`, so objects retain stored, custom, and calculated metadata returned by MCWS. Numeric values and dates remain in JRiver's original JSON format. `Filename` is the actual music file path; the provider path is a separate virtual address.
 
 To change the default columns, edit `JRiver/JRiver.Format.ps1xml` and reload the format in your current session:
 
@@ -58,6 +58,32 @@ To change the default columns, edit `JRiver/JRiver.Format.ps1xml` and reload the
 # Run from the project folder.
 Update-FormatData -PrependPath .\JRiver\JRiver.Format.ps1xml
 ```
+
+## Date values
+
+MCWS does not return every date field in the same numeric format when `Formatted=0`:
+
+- Fields such as `Date` and `Date Original Release` can use OLE Automation dates: days since 1899-12-30, with the fractional part representing the time of day.
+- Timestamp fields such as `Date Imported` can use Unix time: seconds since 1970-01-01 00:00:00 UTC. Convert these to the desired time zone after decoding them.
+- Custom and calculated date fields can return other types, including formatted strings. Choose a conversion based on the actual field, rather than its name alone.
+
+For example, the Unix timestamp `1657270041` represents `2022-07-08 08:47:21 UTC`. In Stockholm, daylight saving time makes this `2022-07-08 10:47:21`, matching the local date and time encoded by the internal OLE Automation value `44750.4495486111`.
+
+```powershell
+# Convert an OLE Automation date to a date string.
+[datetime]::FromOADate(29427).ToString('yyyy-MM-dd')
+# 1980-07-25
+
+# Convert an imported timestamp to the local time zone of this computer.
+[datetimeoffset]::FromUnixTimeSeconds(1657270041).ToLocalTime().ToString('yyyy-MM-dd HH:mm:ss zzz')
+
+# Convert a track's imported timestamp to a DateTimeOffset object.
+if ($null -ne $songs[0].'Date Imported') {
+    [datetimeoffset]::FromUnixTimeSeconds([long]$songs[0].'Date Imported').ToLocalTime()
+}
+```
+
+The provider preserves raw MCWS values. It does not automatically reinterpret dates or apply time zone conversions.
 
 ## Names and paths
 

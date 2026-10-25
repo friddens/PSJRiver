@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2 - 2026-10-25
+
+- Request `Fields=Calculated` when fetching album tracks to include calculated metadata alongside stored fields.
+- Document the difference between OLE Automation dates and Unix timestamps returned by MCWS. Preserve raw metadata values and types.
+
 ## 0.1.1 – 2026-10-25
 
 - Match wildcard paths against track and view names as well as their navigable path segments. Patterns such as `Hells*` and `*Bells` now find `Hells Bells` despite the track-number prefix and file-key suffix.
